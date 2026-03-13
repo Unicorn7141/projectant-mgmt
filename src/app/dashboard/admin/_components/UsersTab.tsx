@@ -13,6 +13,7 @@ type UserRow = {
   roles: string[];
   department: string | null;
   unit: string | null;
+  company: string | null;
   createdBy: string | null;
   college?: string | null;
   profileImage?: string | null;
