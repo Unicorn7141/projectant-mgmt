@@ -162,9 +162,9 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div className="mt-4 text-center text-xs text-slate-500">
+              {/* <div className="mt-4 text-center text-xs text-slate-500">
                 התקנה חדשה? <Link href="/setup" className="text-purple-400 hover:text-purple-300">אתחל משתמש ADMIN ראשון</Link>
-              </div>
+              </div> */}
 
               {error && (
                 <div className="mt-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
