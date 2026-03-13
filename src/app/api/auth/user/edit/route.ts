@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   requireAuth,
@@ -83,7 +84,7 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ message: "תפקיד לא קיים" }, { status: 400 });
       }
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.user.update({
           where: { id: targetId },
           data: {
