@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, getVisibleUserIds } from "@/lib/auth-helpers";
 
+type UserWithRelations = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  isActive: boolean;
+  college: string | null;
+  profileImage: string | null;
+  roles: { role: { name: string } }[];
+  department: {
+    name: string;
+    unit: { name: string; company: { name: string } };
+  } | null;
+  createdBy: { firstName: string; lastName: string } | null;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const caller = await requireAuth(req.headers.get("authorization"));
@@ -21,14 +38,14 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(
-      users.map((u) => ({
+      (users as UserWithRelations[]).map((u) => ({
         id: u.id,
         firstName: u.firstName,
         lastName: u.lastName,
         email: u.email,
         username: u.username,
         isActive: u.isActive,
-        roles: u.roles.map((ur: any) => ur.role.name),
+        roles: u.roles.map((ur) => ur.role.name),
         department: u.department?.name ?? null,
         unit: u.department?.unit?.name ?? null,
         company: u.department?.unit?.company?.name ?? null,
