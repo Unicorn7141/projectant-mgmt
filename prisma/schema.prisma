@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  units     Unit[]
+}
+
+model Unit {
+  id          Int          @id @default(autoincrement())
+  name        String
+  companyId   Int
+  departments Department[]
+  company     Company      @relation(fields: [companyId], references: [id])
+}
+
+model Department {
+  id     Int    @id @default(autoincrement())
+  name   String
+  unitId Int
+  unit   Unit   @relation(fields: [unitId], references: [id])
+  users  User[]
+}
+
+model User {
+  id                 Int              @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  email              String           @unique
+  username           String           @unique
+  passwordHash       String
+  mustChangePassword Boolean          @default(true)
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  departmentId       Int?
+  createdById        Int?
+  college            String?
+  profileImage       String?
+
+
+  department         Department?      @relation(fields: [departmentId], references: [id])
+  createdBy          User?            @relation("CreatedBy", fields: [createdById], references: [id])
+  createdUsers       User[]           @relation("CreatedBy")
+
+  roles              UserRole[]
+  ownedProjects      Project[]        @relation("ProjectOwner")
+  collaboratingOn    ProjectMentor[]
+  studyingOn         ProjectStudent[]
+}
+
+model Role {
+  id    Int        @id @default(autoincrement())
+  name  String     @unique
+  users UserRole[]
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model Project {
+  id          Int              @id @default(autoincrement())
+  name        String
+  description String?
+  ownerId     Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  owner       User             @relation("ProjectOwner", fields: [ownerId], references: [id])
+  mentors     ProjectMentor[]
+  students    ProjectStudent[]
+}
+
+model ProjectMentor {
+  projectId Int
+  mentorId  Int
+  mentor    User    @relation(fields: [mentorId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+
+  @@id([projectId, mentorId])
+}
+
+model ProjectStudent {
+  projectId Int
+  studentId Int
+  project   Project @relation(fields: [projectId], references: [id])
+  student   User    @relation(fields: [studentId], references: [id])
+
+  @@id([projectId, studentId])
+}
