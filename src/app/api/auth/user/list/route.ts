@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         username: u.username,
         isActive: u.isActive,
         departmentId: u.departmentId,
-        roles: u.roles.map((ur) => ur.role.name),
+        roles: u.roles.map((ur: { role: { name: string } }) => ur.role.name),
         department: u.department?.name ?? null,
         unit: u.department?.unit?.name ?? null,
         company: u.department?.unit?.company?.name ?? null,

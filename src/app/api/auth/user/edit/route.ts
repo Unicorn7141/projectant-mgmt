@@ -7,6 +7,9 @@ import {
   isStudentOnly,
 } from "@/lib/auth-helpers";
 
+type RoleEntry = { role: { name: string } };
+type RoleRecord = { id: number };
+
 export async function PATCH(req: NextRequest) {
   try {
     const caller = await requireAuth(req.headers.get("authorization"));
@@ -44,7 +47,7 @@ export async function PATCH(req: NextRequest) {
     const requestedRoles: string[] | undefined = Array.isArray(roles)
       ? roles
       : undefined;
-    const targetRoles = targetUser.roles.map((ur) => ur.role.name);
+    const targetRoles = targetUser.roles.map((ur: RoleEntry) => ur.role.name);
 
     if (hasRole(caller, "MENTOR")) {
       if (!isStudentOnly(targetRoles)) {
@@ -102,7 +105,7 @@ export async function PATCH(req: NextRequest) {
 
         await tx.userRole.deleteMany({ where: { userId: targetId } });
         await tx.userRole.createMany({
-          data: roleRecords.map((r) => ({
+          data: roleRecords.map((r: RoleRecord) => ({
             userId: targetId,
             roleId: r.id,
           })),
@@ -145,7 +148,7 @@ export async function PATCH(req: NextRequest) {
       username: updated!.username,
       isActive: updated!.isActive,
       departmentId: updated!.departmentId,
-      roles: updated!.roles.map((ur) => ur.role.name),
+      roles: updated!.roles.map((ur: RoleEntry) => ur.role.name),
       department: updated!.department?.name ?? null,
       unit: updated!.department?.unit?.name ?? null,
       company: updated!.department?.unit?.company?.name ?? null,

@@ -7,6 +7,8 @@ import {
   isStudentOnly,
 } from "@/lib/auth-helpers";
 
+type RoleEntry = { role: { name: string } };
+
 export async function DELETE(req: NextRequest) {
   try {
     const caller = await requireAuth(req.headers.get("authorization"));
@@ -39,7 +41,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "משתמש לא נמצא" }, { status: 404 });
     }
 
-    const targetRoles = targetUser.roles.map((ur) => ur.role.name);
+    const targetRoles = targetUser.roles.map((ur: RoleEntry) => ur.role.name);
     if (hasRole(caller, "MENTOR") && !isStudentOnly(targetRoles)) {
       return NextResponse.json(
         { message: "מנטור יכול להשבית סטודנטים בלבד" },

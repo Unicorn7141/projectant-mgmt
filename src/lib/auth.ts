@@ -5,6 +5,8 @@ import { assertJwtSecret, DEFAULT_PASSWORD } from "@/lib/auth-config";
 
 const JWT_SECRET = assertJwtSecret();
 
+type RoleRecord = { id: number };
+
 export type PublicUser = {
   id: number;
   firstName: string;
@@ -56,7 +58,7 @@ export async function createUserWithDefaultPassword(params: {
       mustChangePassword: true,
       isActive: true,
       roles: {
-        create: roles.map((r) => ({
+        create: roles.map((r: RoleRecord) => ({
           role: { connect: { id: r.id } },
         })),
       },

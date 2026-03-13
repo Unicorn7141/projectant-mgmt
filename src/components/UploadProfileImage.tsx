@@ -14,7 +14,7 @@ export function UploadProfileImage({
   const [dragging, setDragging] = useState(false);
 
   const { startUpload } = useUploadThing("profileImage", {
-    onClientUploadComplete: (res) => {
+    onClientUploadComplete: (res: Array<{ url?: string }> | undefined) => {
       if (res?.[0]?.url) {
         onChange(res[0].url);
       }

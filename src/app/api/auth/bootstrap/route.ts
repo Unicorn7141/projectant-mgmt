@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_PASSWORD } from "@/lib/auth-config";
 
+type RoleEntry = { role: { name: string } };
+
 export async function POST(req: NextRequest) {
   try {
     const usersCount = await prisma.user.count();
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
         user: {
           id: user.id,
           username: user.username,
-          roles: user.roles.map((entry) => entry.role.name),
+          roles: user.roles.map((entry: RoleEntry) => entry.role.name),
         },
         defaultPassword: DEFAULT_PASSWORD,
       },

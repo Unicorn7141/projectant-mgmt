@@ -4,6 +4,9 @@ import { assertJwtSecret } from "@/lib/auth-config";
 
 const JWT_SECRET = assertJwtSecret();
 
+type RoleEntry = { role: { name: string } };
+type IdEntry = { id: number };
+
 export type AuthUser = {
   id: number;
   roles: string[];
@@ -32,7 +35,7 @@ export async function requireAuth(
 
   return {
     id: user.id,
-    roles: user.roles.map((ur) => ur.role.name),
+    roles: user.roles.map((ur: RoleEntry) => ur.role.name),
     departmentId: user.departmentId,
   };
 }
@@ -69,7 +72,7 @@ export async function getVisibleUserIds(userId: number): Promise<number[]> {
 export async function getManageableUserIds(user: AuthUser): Promise<number[]> {
   if (hasRole(user, "ADMIN")) {
     const users = await prisma.user.findMany({ select: { id: true } });
-    return users.map((entry) => entry.id);
+    return users.map((entry: IdEntry) => entry.id);
   }
 
   return getVisibleUserIds(user.id);
