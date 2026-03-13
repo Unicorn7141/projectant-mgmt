@@ -22,7 +22,10 @@ type UserRow = {
   unit: string | null;
   company: string | null;
   createdBy: string | null;
+  college?: string | null;
+  profileImage?: string | null;
 };
+
 type Company = { id: number; name: string };
 type Unit = {
   id: number;
