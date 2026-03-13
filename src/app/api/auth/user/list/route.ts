@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         email: u.email,
         username: u.username,
         isActive: u.isActive,
-        roles: u.roles.map((ur) => ur.role.name),
+        roles: u.roles.map((ur: any) => ur.role.name),
         department: u.department?.name ?? null,
         unit: u.department?.unit?.name ?? null,
         company: u.department?.unit?.company?.name ?? null,

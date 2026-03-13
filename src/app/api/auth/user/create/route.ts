@@ -96,7 +96,9 @@ export async function POST(req: NextRequest) {
           department: { connect: { id: departmentId } },
         }),
         roles: {
-          create: roles.map((r) => ({ role: { connect: { id: r.id } } })),
+          create: roles.map((r: { id: number }) => ({
+            role: { connect: { id: r.id } },
+          })),
         },
       },
       include: {
@@ -113,7 +115,7 @@ export async function POST(req: NextRequest) {
           lastName: user.lastName,
           email: user.email,
           username: user.username,
-          roles: user.roles.map((ur) => ur.role.name),
+          roles: user.roles.map((ur: any) => ur.role.name),
           department: user.department?.name ?? null,
           unit: user.department?.unit?.name ?? null,
           company: user.department?.unit?.company?.name ?? null,
