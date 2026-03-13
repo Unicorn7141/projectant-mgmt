@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       email: user.email,
       username: user.username,
       mustChangePassword: user.mustChangePassword,
-      roles: user.roles.map((ur) => ur.role.name),
+      roles: user.roles.map((ur: { role: { name: string } }) => ur.role.name),
     });
   } catch {
     return NextResponse.json({ message: "Invalid token" }, { status: 401 });
