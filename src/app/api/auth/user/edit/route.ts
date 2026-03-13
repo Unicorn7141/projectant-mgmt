@@ -51,7 +51,10 @@ export async function PATCH(req: NextRequest) {
       });
 
       await prisma.userRole.createMany({
-        data: roleRecords.map((r) => ({ userId: Number(id), roleId: r.id })),
+        data: roleRecords.map((r: { id: number }) => ({
+          userId: Number(id),
+          roleId: r.id,
+        })),
       });
     }
 
