@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
       username: user.username,
       mustChangePassword: user.mustChangePassword,
       roles: user.roles.map((ur: { role: { name: string } }) => ur.role.name),
+      profileImage: user.profileImage ?? null,
     });
   } catch {
     return NextResponse.json({ message: "Invalid token" }, { status: 401 });

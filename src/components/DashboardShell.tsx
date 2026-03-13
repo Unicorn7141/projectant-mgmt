@@ -190,10 +190,18 @@ export default function DashboardShell({
         {/* Topbar */}
         <header className="flex h-16 items-center justify-between px-8 border-b border-white/5 bg-[#0a0a16]/40 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 p-0.5 shadow-lg shadow-purple-500/20">
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-900">
-                <UserCircle size={18} className="text-slate-300" />
-              </div>
+            <div className="h-8 w-8 rounded-full overflow-hidden border border-white/10 shrink-0">
+              {user.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt={user.firstName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center">
+                  <UserCircle size={18} className="text-white" />
+                </div>
+              )}
             </div>
             <div className="text-right">
               <p className="text-xs font-bold text-white">

@@ -65,7 +65,9 @@ export async function PATCH(req: NextRequest) {
       email: updated.email,
       username: updated.username,
       isActive: updated.isActive,
-      roles: updated.roles.map((ur) => ur.role.name),
+      roles: updated.roles.map(
+        (ur: { role: { name: string } }) => ur.role.name,
+      ),
       department: updated.department?.name ?? null,
     });
   } catch (err: any) {
