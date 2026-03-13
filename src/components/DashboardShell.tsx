@@ -21,6 +21,7 @@ type UserInfo = {
   username: string;
   mustChangePassword: boolean;
   roles: string[];
+  profileImage?: string | null;
 };
 
 const roleLabels: Record<string, string> = {
