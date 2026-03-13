@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  requireAuth,
-  getManageableUserIds,
-  hasRole,
-  isStudentOnly,
-} from "@/lib/auth-helpers";
-
-type RoleEntry = { role: { name: string } };
+import { requireAuth, getVisibleUserIds } from "@/lib/auth-helpers";
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -15,49 +8,21 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json();
 
     if (!id) return NextResponse.json({ message: "חסר ID" }, { status: 400 });
-    const targetId = Number(id);
 
-    if (caller.id === targetId) {
+    const visibleIds = await getVisibleUserIds(caller.id);
+    if (!visibleIds.includes(Number(id))) {
       return NextResponse.json(
-        { message: "לא ניתן להשבית את המשתמש המחובר" },
-        { status: 400 },
-      );
-    }
-
-    const manageableIds = await getManageableUserIds(caller);
-    if (!manageableIds.includes(targetId)) {
-      return NextResponse.json(
-        { message: "אין הרשאה להשבית משתמש זה" },
+        { message: "אין הרשאה למחוק משתמש זה" },
         { status: 403 },
       );
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetId },
-      include: { roles: { include: { role: true } } },
-    });
+    // מחיקת roles קודם (foreign key)
+    await prisma.userRole.deleteMany({ where: { userId: Number(id) } });
+    // מחיקת המשתמש עצמו
+    await prisma.user.delete({ where: { id: Number(id) } });
 
-    if (!targetUser) {
-      return NextResponse.json({ message: "משתמש לא נמצא" }, { status: 404 });
-    }
-
-    const targetRoles = targetUser.roles.map((ur: RoleEntry) => ur.role.name);
-    if (hasRole(caller, "MENTOR") && !isStudentOnly(targetRoles)) {
-      return NextResponse.json(
-        { message: "מנטור יכול להשבית סטודנטים בלבד" },
-        { status: 403 },
-      );
-    }
-    if (!hasRole(caller, "ADMIN", "MENTOR")) {
-      return NextResponse.json({ message: "אין הרשאה" }, { status: 403 });
-    }
-
-    await prisma.user.update({
-      where: { id: targetId },
-      data: { isActive: false },
-    });
-
-    return NextResponse.json({ message: "המשתמש הושבת בהצלחה" });
+    return NextResponse.json({ message: "המשתמש נמחק בהצלחה" });
   } catch (err: any) {
     if (err.message === "UNAUTHORIZED") {
       return NextResponse.json({ message: "לא מורשה" }, { status: 401 });

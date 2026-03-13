@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type UserInfo = {
@@ -97,6 +96,7 @@ export default function LoginPage() {
       <BackgroundEffects />
 
       <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6">
+        {/* מצב: טעינה */}
         {status === "loading" && (
           <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
             <div className="rounded-[32px] border border-white/10 bg-[#0a0a16]/60 backdrop-blur-2xl p-12 text-center shadow-[0_0_80px_-20px_rgba(168,85,247,0.3)]">
@@ -113,10 +113,16 @@ export default function LoginPage() {
               <p className="text-slate-400 text-sm font-medium tracking-wide">
                 מאתחל את סביבת העבודה המאובטחת שלך...
               </p>
+              <div className="mt-8 flex justify-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1 h-1 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-1 h-1 rounded-full bg-purple-500 animate-bounce" />
+              </div>
             </div>
           </div>
         )}
 
+        {/* מצב: טופס כניסה */}
         {status === "idle" && (
           <div className="w-full max-w-xl text-center">
             <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -134,6 +140,9 @@ export default function LoginPage() {
                   ניהול פרויקטים ופרויקטנטים
                 </span>
               </h1>
+              {/* <p className="text-slate-400 text-lg max-w-lg mx-auto leading-relaxed">
+                מערכת ניהול פרויקטנטים
+              </p> */}
             </div>
 
             <div className="rounded-[32px] border border-white/10 bg-[#0a0a16]/40 backdrop-blur-2xl p-8 md:p-12 shadow-[0_0_80px_-20px_rgba(168,85,247,0.15)]">
@@ -162,10 +171,6 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* <div className="mt-4 text-center text-xs text-slate-500">
-                התקנה חדשה? <Link href="/setup" className="text-purple-400 hover:text-purple-300">אתחל משתמש ADMIN ראשון</Link>
-              </div> */}
-
               {error && (
                 <div className="mt-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
                   {error}
@@ -175,6 +180,7 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* מצב: חובת שינוי סיסמה */}
         {status === "authenticated" && user && (
           <ForcePasswordChange
             user={user}

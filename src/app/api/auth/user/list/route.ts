@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getListableUserIds } from "@/lib/auth-helpers";
+import { requireAuth, getVisibleUserIds } from "@/lib/auth-helpers";
 
 type UserWithRelations = {
   id: number;
@@ -9,7 +9,6 @@ type UserWithRelations = {
   email: string;
   username: string;
   isActive: boolean;
-  departmentId: number | null;
   college: string | null;
   profileImage: string | null;
   roles: { role: { name: string } }[];
@@ -23,10 +22,13 @@ type UserWithRelations = {
 export async function GET(req: NextRequest) {
   try {
     const caller = await requireAuth(req.headers.get("authorization"));
-    const visibleIds = await getListableUserIds(caller);
+
+    const visibleIds = await getVisibleUserIds(caller.id);
 
     const users = await prisma.user.findMany({
-      where: { id: { in: visibleIds } },
+      where: {
+        id: { in: visibleIds, not: caller.id },
+      },
       include: {
         roles: { include: { role: true } },
         department: { include: { unit: { include: { company: true } } } },
@@ -43,8 +45,7 @@ export async function GET(req: NextRequest) {
         email: u.email,
         username: u.username,
         isActive: u.isActive,
-        departmentId: u.departmentId,
-        roles: u.roles.map((ur: { role: { name: string } }) => ur.role.name),
+        roles: u.roles.map((ur) => ur.role.name),
         department: u.department?.name ?? null,
         unit: u.department?.unit?.name ?? null,
         company: u.department?.unit?.company?.name ?? null,

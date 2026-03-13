@@ -1,65 +1,36 @@
-# Projectant Management
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Next.js + Prisma management system for admins, mentors, students, companies, units, and departments.
+## Getting Started
 
-## What was fixed
-
-- Synced the Prisma migration history with the current `User` model fields (`createdById`, `college`, `profileImage`).
-- Added Prisma seed support for the required roles: `ADMIN`, `MENTOR`, `STUDENT`.
-- Added initial-system bootstrap support at `/setup` and `/api/auth/bootstrap`.
-- Fixed user-management authorization so mentors can only manage student accounts in their own hierarchy.
-- Changed user delete behavior to **disable** instead of hard-delete.
-- Fixed stale roles returned from user edit.
-- Secured profile image upload with auth + type/size validation.
-- Secured the UploadThing route middleware.
-- Fixed the broken ESLint config.
-- Added missing dashboard pages to avoid 404s from the sidebar.
-- Removed the committed `.env` and replaced it with `.env.example`.
-
-## Setup
-
-1. Install dependencies
-
-```bash
-npm install
-```
-
-2. Copy environment variables
-
-```bash
-cp .env.example .env
-```
-
-3. Run Prisma migrations
-
-```bash
-npx prisma migrate deploy
-```
-
-4. Seed the required roles
-
-```bash
-npm run db:seed
-```
-
-5. Start the app
+First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## First-time initialization
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-After the app is running, open:
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```text
-http://localhost:3000/setup
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-Create the first `ADMIN` user there.
+## Learn More
 
-## Notes
+To learn more about Next.js, take a look at the following resources:
 
-- The first admin receives the temporary password from `DEFAULT_TEMP_PASSWORD`.
-- The first login still forces a password change.
-- User disable is implemented via `isActive = false`.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

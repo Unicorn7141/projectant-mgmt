@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { FolderKanban, Users, GraduationCap, ArrowUpRight } from "lucide-react";
 
 type UserInfo = {
@@ -50,6 +49,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header */}
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
           שלום, {user.firstName} 👋
@@ -59,6 +59,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Stats */}
       <div className="grid gap-6 md:grid-cols-3 mb-10">
         {stats.map((stat) => (
           <div
@@ -79,7 +80,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Bottom grid */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Recent activity */}
         <div className="rounded-3xl border border-white/10 bg-[#0a0a16]/40 p-8 backdrop-blur-xl">
           <h3 className="text-base font-bold text-white mb-6">פעילות אחרונה</h3>
           <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -93,6 +96,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Quick actions */}
         <div className="rounded-3xl border border-white/10 bg-[#0a0a16]/40 p-8 backdrop-blur-xl">
           <h3 className="text-base font-bold text-white mb-6">פעולות מהירות</h3>
           <div className="space-y-3">
@@ -125,7 +129,7 @@ export default function DashboardPage() {
 }
 
 function QuickAction({ label, href }: { label: string; href: string }) {
-  const router = useRouter();
+  const router = require("next/navigation").useRouter();
   return (
     <button
       onClick={() => router.push(href)}

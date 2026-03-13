@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -71,6 +71,8 @@ export default function DashboardShell({
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -113,6 +115,47 @@ export default function DashboardShell({
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
     router.push("/login");
+  };
+
+  const handleProfileImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    const token = localStorage.getItem("authToken");
+    if (!file || !token || !user) return;
+
+    setUploadingProfile(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("saveToProfile", "true");
+
+      const res = await fetch("/api/upload/profile-image", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = (await res.json()) as {
+        message?: string;
+        user?: UserInfo;
+      };
+
+      if (!res.ok || !data.user) {
+        throw new Error(data.message || "Upload failed");
+      }
+
+      setUser(data.user);
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+    } catch (error) {
+      console.error("Profile image upload failed", error);
+      alert("העלאת התמונה נכשלה");
+    } finally {
+      setUploadingProfile(false);
+      e.target.value = "";
+    }
   };
 
   if (!user) return null;
@@ -191,18 +234,36 @@ export default function DashboardShell({
         {/* Topbar */}
         <header className="flex h-16 items-center justify-between px-8 border-b border-white/5 bg-[#0a0a16]/40 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full overflow-hidden border border-white/10 shrink-0">
-              {user.profileImage ? (
-                <img
-                  src={user.profileImage}
-                  alt={user.firstName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center">
-                  <UserCircle size={18} className="text-white" />
-                </div>
-              )}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingProfile}
+                className="relative h-10 w-10 overflow-hidden rounded-full border border-white/10 transition hover:border-purple-400/40 disabled:cursor-wait disabled:opacity-70"
+                title="העלה תמונת פרופיל"
+              >
+                {user.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt={user.firstName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center">
+                    <UserCircle size={18} className="text-white" />
+                  </div>
+                )}
+                <span className="absolute inset-x-0 bottom-0 bg-black/55 py-0.5 text-[9px] text-white">
+                  {uploadingProfile ? "...מעלה" : "עריכה"}
+                </span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleProfileImageUpload}
+              />
             </div>
             <div className="text-right">
               <p className="text-xs font-bold text-white">

@@ -1,11 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
-import { assertJwtSecret, DEFAULT_PASSWORD } from "@/lib/auth-config";
 
-const JWT_SECRET = assertJwtSecret();
-
-type RoleRecord = { id: number };
+const DEFAULT_PASSWORD = "Aa1234567";
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || "dev-secret-change-me";
 
 export type PublicUser = {
   id: number;
@@ -15,7 +13,6 @@ export type PublicUser = {
   username: string;
   mustChangePassword: boolean;
   roles: string[];
-  profileImage?: string | null;
 };
 
 export async function createUserWithDefaultPassword(params: {
@@ -58,7 +55,7 @@ export async function createUserWithDefaultPassword(params: {
       mustChangePassword: true,
       isActive: true,
       roles: {
-        create: roles.map((r: RoleRecord) => ({
+        create: roles.map((r) => ({
           role: { connect: { id: r.id } },
         })),
       },
@@ -141,6 +138,5 @@ function toPublicUser(user: any): PublicUser {
     username: user.username,
     mustChangePassword: user.mustChangePassword,
     roles: user.roles?.map((ur: any) => ur.role.name) ?? [],
-    profileImage: user.profileImage ?? null,
   };
 }

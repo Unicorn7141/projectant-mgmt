@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useUploadThing } from "@/lib/uploadthing";
 
 export function UploadProfileImage({
   value,
@@ -13,17 +12,34 @@ export function UploadProfileImage({
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const { startUpload } = useUploadThing("profileImage", {
-    onClientUploadComplete: (res: Array<{ url?: string }> | undefined) => {
-      if (res?.[0]?.url) {
-        onChange(res[0].url);
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("Missing auth token");
       }
-      setUploading(false);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("saveToProfile", "false");
+
+      const res = await fetch("/api/upload/profile-image", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = (await res.json()) as { url?: string; message?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || "Upload failed");
+      }
+
+      onChange(data.url);
     },
-    onUploadError: () => {
-      setUploading(false);
-    },
-  });
+    [onChange],
+  );
 
   const onDrop = useCallback(
     async (e: React.DragEvent) => {
@@ -32,16 +48,25 @@ export function UploadProfileImage({
       const file = e.dataTransfer.files[0];
       if (!file) return;
       setUploading(true);
-      await startUpload([file]);
+      try {
+        await uploadFile(file);
+      } finally {
+        setUploading(false);
+      }
     },
-    [startUpload],
+    [uploadFile],
   );
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    await startUpload([file]);
+    try {
+      await uploadFile(file);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   return (

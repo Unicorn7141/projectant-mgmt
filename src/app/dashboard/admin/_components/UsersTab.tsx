@@ -10,7 +10,6 @@ type UserRow = {
   email: string;
   username: string;
   isActive: boolean;
-  departmentId: number | null;
   roles: string[];
   department: string | null;
   unit: string | null;
@@ -66,7 +65,7 @@ export function UsersTab({
               <th className="px-4 py-3 font-medium">תפקיד</th>
               <th className="px-4 py-3 font-medium">מחלקה</th>
               <th className="px-4 py-3 font-medium">מוסד</th>
-              <th className="px-4 py-3 font-medium">נוצר ע\"י</th>
+              <th className="px-4 py-3 font-medium">נוצר ע"י</th>
               <th className="px-4 py-3 font-medium">סטטוס</th>
               <th className="px-4 py-3 font-medium">פעולות</th>
             </tr>

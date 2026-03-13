@@ -17,7 +17,6 @@ type UserRow = {
   email: string;
   username: string;
   isActive: boolean;
-  departmentId: number | null;
   roles: string[];
   department: string | null;
   unit: string | null;
@@ -68,32 +67,31 @@ export default function AdminPage() {
     [token],
   );
 
-  async function fetchJson<T>(url: string): Promise<T[]> {
-    const res = await fetch(url, { headers: hdrs() });
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  }
-
   const fetchUsers = useCallback(async () => {
     if (!token) return;
     setLoading(true);
-    setUsers(await fetchJson<UserRow>("/api/auth/user/list"));
+    const res = await fetch("/api/auth/user/list", { headers: hdrs() });
+    const data = await res.json();
+    setUsers(Array.isArray(data) ? data : []);
     setLoading(false);
   }, [token, hdrs]);
 
   const fetchCompanies = useCallback(async () => {
     if (!token) return;
-    setCompanies(await fetchJson<Company>("/api/org/company"));
+    const res = await fetch("/api/org/company", { headers: hdrs() });
+    setCompanies(await res.json());
   }, [token, hdrs]);
 
   const fetchUnits = useCallback(async () => {
     if (!token) return;
-    setUnits(await fetchJson<Unit>("/api/org/unit"));
+    const res = await fetch("/api/org/unit", { headers: hdrs() });
+    setUnits(await res.json());
   }, [token, hdrs]);
 
   const fetchDepts = useCallback(async () => {
     if (!token) return;
-    setDepartments(await fetchJson<Department>("/api/org/department"));
+    const res = await fetch("/api/org/department", { headers: hdrs() });
+    setDepartments(await res.json());
   }, [token, hdrs]);
 
   useEffect(() => {

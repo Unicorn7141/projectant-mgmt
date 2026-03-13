@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "postinstall": "prisma generate",
-    "db:seed": "node prisma/seed.js"
+    "lint": "eslint"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
@@ -35,8 +33,5 @@
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
   }
 }

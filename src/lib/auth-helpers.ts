@@ -1,11 +1,7 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
-import { assertJwtSecret } from "@/lib/auth-config";
 
-const JWT_SECRET = assertJwtSecret();
-
-type RoleEntry = { role: { name: string } };
-type IdEntry = { id: number };
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || "1123698";
 
 export type AuthUser = {
   id: number;
@@ -35,7 +31,7 @@ export async function requireAuth(
 
   return {
     id: user.id,
-    roles: user.roles.map((ur: RoleEntry) => ur.role.name),
+    roles: user.roles.map((ur) => ur.role.name),
     departmentId: user.departmentId,
   };
 }
@@ -44,10 +40,7 @@ export function hasRole(user: AuthUser, ...roles: string[]) {
   return roles.some((r) => user.roles.includes(r));
 }
 
-export function isStudentOnly(roleNames: string[]) {
-  return roleNames.length > 0 && roleNames.every((role) => role === "STUDENT");
-}
-
+// מחזיר את כל ה-IDs של משתמשים שנוצרו "מתחת" ל-user הנוכחי (רקורסיבי)
 export async function getVisibleUserIds(userId: number): Promise<number[]> {
   const ids: number[] = [userId];
   const queue = [userId];
@@ -59,26 +52,10 @@ export async function getVisibleUserIds(userId: number): Promise<number[]> {
       select: { id: true },
     });
     for (const child of children) {
-      if (!ids.includes(child.id)) {
-        ids.push(child.id);
-        queue.push(child.id);
-      }
+      ids.push(child.id);
+      queue.push(child.id);
     }
   }
 
   return ids;
-}
-
-export async function getManageableUserIds(user: AuthUser): Promise<number[]> {
-  if (hasRole(user, "ADMIN")) {
-    const users = await prisma.user.findMany({ select: { id: true } });
-    return users.map((entry: IdEntry) => entry.id);
-  }
-
-  return getVisibleUserIds(user.id);
-}
-
-export async function getListableUserIds(user: AuthUser): Promise<number[]> {
-  const ids = await getManageableUserIds(user);
-  return ids.filter((id) => id !== user.id);
 }

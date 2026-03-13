@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import {
-  requireAuth,
-  hasRole,
-  isStudentOnly,
-} from "@/lib/auth-helpers";
-import { DEFAULT_PASSWORD } from "@/lib/auth-config";
+import { requireAuth, hasRole } from "@/lib/auth-helpers";
+
+const DEFAULT_PASSWORD = "Aa1234567";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,8 +22,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "שדות חסרים" }, { status: 400 });
     }
 
+    // הרשאות יצירה
     if (hasRole(caller, "MENTOR")) {
-      if (!isStudentOnly(roleNames)) {
+      if (!roleNames.every((r: string) => r === "STUDENT")) {
         return NextResponse.json(
           { message: "מנטור יכול ליצור סטודנטים בלבד" },
           { status: 403 },
@@ -36,6 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "אין הרשאה" }, { status: 403 });
     }
 
+    // בדיקת כפילות אימייל
     const existing = await prisma.user.findFirst({ where: { email } });
     if (existing) {
       return NextResponse.json(
@@ -44,6 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // username – ידני או אוטומטי
     let username: string;
     if (body.username && body.username.trim()) {
       username = body.username.trim().toLowerCase().replace(/\s+/g, "");
@@ -63,20 +63,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // מחלקה: מנטור → מחלקה שלו, אדמין → מהבקשה
     let departmentId: number | null = null;
     if (hasRole(caller, "MENTOR")) {
       departmentId = caller.departmentId;
-    } else if (body.departmentId !== undefined && body.departmentId !== null) {
+    } else if (body.departmentId) {
       departmentId = Number(body.departmentId);
-    }
-
-    if (departmentId) {
-      const department = await prisma.department.findUnique({
-        where: { id: departmentId },
-      });
-      if (!department) {
-        return NextResponse.json({ message: "מחלקה לא קיימת" }, { status: 400 });
-      }
     }
 
     const roles = await prisma.role.findMany({
@@ -97,8 +89,8 @@ export async function POST(req: NextRequest) {
         passwordHash,
         mustChangePassword: true,
         isActive: true,
-        college: body.college ?? null,
-        profileImage: body.profileImage ?? null,
+        ...(body.college && { college: body.college }),
+        ...(body.profileImage && { profileImage: body.profileImage }),
         createdBy: { connect: { id: caller.id } },
         ...(departmentId && {
           department: { connect: { id: departmentId } },
@@ -124,16 +116,21 @@ export async function POST(req: NextRequest) {
           email: user.email,
           username: user.username,
           roles: user.roles.map((ur: any) => ur.role.name),
-          departmentId: user.departmentId,
+          department: user.department?.name ?? null,
+          unit: user.department?.unit?.name ?? null,
+          company: user.department?.unit?.company?.name ?? null,
         },
         defaultPassword: DEFAULT_PASSWORD,
       },
       { status: 201 },
     );
   } catch (err: any) {
+    if (err.message === "UNAUTHORIZED") {
+      return NextResponse.json({ message: "לא מורשה" }, { status: 401 });
+    }
     console.error(err);
     return NextResponse.json(
-      { message: err.message || "שגיאה ביצירת משתמש" },
+      { message: err.message || "שגיאה" },
       { status: 500 },
     );
   }

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
-import { assertJwtSecret } from "@/lib/auth-config";
 
-const JWT_SECRET = assertJwtSecret();
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || "dev-secret-change-me";
 
 export async function GET(req: NextRequest) {
   try {
