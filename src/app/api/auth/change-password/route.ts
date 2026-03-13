@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { changePassword } from "@/lib/auth";
+import { assertJwtSecret } from "@/lib/auth-config";
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "dev-secret-change-me";
+const JWT_SECRET = assertJwtSecret();
 
 export async function POST(req: NextRequest) {
   try {

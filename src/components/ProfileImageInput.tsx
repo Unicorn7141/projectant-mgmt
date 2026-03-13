@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { UserCircle, Link } from "lucide-react";
+import { UserCircle } from "lucide-react";
 
 export function ProfileImageInput({
   value,
@@ -36,14 +36,17 @@ export function ProfileImageInput({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      const token = localStorage.getItem("authToken");
       const res = await fetch("/api/upload/profile-image", {
         method: "POST",
         body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Upload failed");
       if (data.url) onChange(data.url);
     } catch {
-      // שגיאה בהעלאה
+      // אפשר לחבר כאן טוסט / הודעת שגיאה לפי הצורך
     } finally {
       setUploading(false);
     }
@@ -94,7 +97,7 @@ export function ProfileImageInput({
         >
           <input
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp"
             className="hidden"
             onChange={handleFileInput}
           />
@@ -116,7 +119,7 @@ export function ProfileImageInput({
                 ? "שחרר כאן..."
                 : "גרור תמונה או לחץ לבחירה"}
           </p>
-          <p className="text-[10px] text-slate-600 mt-1">PNG, JPG עד 4MB</p>
+          <p className="text-[10px] text-slate-600 mt-1">PNG, JPG, WEBP עד 4MB</p>
         </label>
       ) : (
         <div className="space-y-2">

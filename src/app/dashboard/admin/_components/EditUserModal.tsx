@@ -16,7 +16,7 @@ type UserRow = {
   lastName: string;
   email: string;
   isActive: boolean;
-  department: string | null;
+  departmentId: number | null;
   roles: string[];
   college?: string | null;
   profileImage?: string | null;
@@ -43,7 +43,7 @@ export function EditUserModal({
   const [college, setCollege] = useState(user.college ?? "");
   const [profileImage, setProfileImage] = useState(user.profileImage ?? "");
   const [departmentId, setDepartmentId] = useState(
-    departments.find((d) => d.name === user.department)?.id?.toString() ?? "",
+    user.departmentId?.toString() ?? "",
   );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

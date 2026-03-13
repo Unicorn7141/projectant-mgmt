@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { assertJwtSecret } from "@/lib/auth-config";
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "1123698";
+const JWT_SECRET = assertJwtSecret();
 
 export type AuthUser = {
   id: number;
@@ -40,7 +41,10 @@ export function hasRole(user: AuthUser, ...roles: string[]) {
   return roles.some((r) => user.roles.includes(r));
 }
 
-// מחזיר את כל ה-IDs של משתמשים שנוצרו "מתחת" ל-user הנוכחי (רקורסיבי)
+export function isStudentOnly(roleNames: string[]) {
+  return roleNames.length > 0 && roleNames.every((role) => role === "STUDENT");
+}
+
 export async function getVisibleUserIds(userId: number): Promise<number[]> {
   const ids: number[] = [userId];
   const queue = [userId];
@@ -52,10 +56,26 @@ export async function getVisibleUserIds(userId: number): Promise<number[]> {
       select: { id: true },
     });
     for (const child of children) {
-      ids.push(child.id);
-      queue.push(child.id);
+      if (!ids.includes(child.id)) {
+        ids.push(child.id);
+        queue.push(child.id);
+      }
     }
   }
 
   return ids;
+}
+
+export async function getManageableUserIds(user: AuthUser): Promise<number[]> {
+  if (hasRole(user, "ADMIN")) {
+    const users = await prisma.user.findMany({ select: { id: true } });
+    return users.map((entry) => entry.id);
+  }
+
+  return getVisibleUserIds(user.id);
+}
+
+export async function getListableUserIds(user: AuthUser): Promise<number[]> {
+  const ids = await getManageableUserIds(user);
+  return ids.filter((id) => id !== user.id);
 }
