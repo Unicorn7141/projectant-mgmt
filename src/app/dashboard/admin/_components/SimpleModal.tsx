@@ -56,13 +56,21 @@ export function SimpleCreateModal({
   fields,
   onClose,
   onSubmit,
+  initialValues,
+  submitLabel,
 }: {
   title: string;
   fields: Field[];
   onClose: () => void;
   onSubmit: (data: Record<string, any>) => Promise<void>;
+  initialValues?: Record<string, string | number>;
+  submitLabel?: string;
 }) {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>(
+    Object.fromEntries(
+      Object.entries(initialValues ?? {}).map(([key, value]) => [key, String(value)]),
+    ),
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -121,7 +129,7 @@ export function SimpleCreateModal({
           disabled={loading}
           className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50"
         >
-          {loading ? "שומר..." : "צור"}
+          {loading ? "שומר..." : (submitLabel ?? "צור")}
         </button>
       </form>
     </Modal>

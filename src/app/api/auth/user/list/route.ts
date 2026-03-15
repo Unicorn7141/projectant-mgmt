@@ -13,8 +13,9 @@ type UserWithRelations = {
   profileImage: string | null;
   roles: { role: { name: string } }[];
   department: {
+    id: number;
     name: string;
-    unit: { name: string; company: { name: string } };
+    unit: { id: number; name: string; company: { id: number; name: string } };
   } | null;
   createdBy: { firstName: string; lastName: string } | null;
 };
@@ -34,7 +35,13 @@ export async function GET(req: NextRequest) {
         department: { include: { unit: { include: { company: true } } } },
         createdBy: { select: { firstName: true, lastName: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { department: { unit: { company: { name: "asc" } } } },
+        { department: { unit: { name: "asc" } } },
+        { department: { name: "asc" } },
+        { firstName: "asc" },
+        { lastName: "asc" },
+      ],
     });
 
     return NextResponse.json(
@@ -45,10 +52,14 @@ export async function GET(req: NextRequest) {
         email: u.email,
         username: u.username,
         isActive: u.isActive,
-        roles: u.roles.map((ur) => ur.role.name),
+        roles: u.roles.map((ur: { role: { name: string } }) => ur.role.name),
+        departmentId: u.department?.id ?? null,
         department: u.department?.name ?? null,
         unit: u.department?.unit?.name ?? null,
         company: u.department?.unit?.company?.name ?? null,
+        path: u.department
+          ? `${u.department.unit.company.name} / ${u.department.unit.name} / ${u.department.name}`
+          : null,
         createdBy: u.createdBy
           ? `${u.createdBy.firstName} ${u.createdBy.lastName}`
           : null,

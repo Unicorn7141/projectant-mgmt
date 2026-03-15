@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, hasRole } from "@/lib/auth-helpers";
+import { deleteUsersAndDependencies } from "@/lib/org-cascade";
 
 export async function GET(req: NextRequest) {
   try {
     await requireAuth(req.headers.get("authorization"));
     const departments = await prisma.department.findMany({
       include: { unit: { include: { company: true } } },
-      orderBy: { name: "asc" },
+      orderBy: [
+        { unit: { company: { name: "asc" } } },
+        { unit: { name: "asc" } },
+        { name: "asc" },
+      ],
     });
     return NextResponse.json(departments);
   } catch {
@@ -49,10 +55,10 @@ export async function PATCH(req: NextRequest) {
     const department = await prisma.department.update({
       where: { id: Number(id) },
       data: {
-        ...(name && { name }),
-        ...(unitId && { unitId: Number(unitId) }),
+        ...(name ? { name } : {}),
+        ...(unitId ? { unitId: Number(unitId) } : {}),
       },
-      include: { unit: true },
+      include: { unit: { include: { company: true } } },
     });
     return NextResponse.json(department);
   } catch (err: any) {
@@ -70,8 +76,23 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "אדמין בלבד" }, { status: 403 });
     }
     const { id } = await req.json();
-    await prisma.department.delete({ where: { id: Number(id) } });
-    return NextResponse.json({ message: "נמחק בהצלחה" });
+    const departmentId = Number(id);
+
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const users = await tx.user.findMany({
+        where: { departmentId },
+        select: { id: true },
+      });
+
+      await deleteUsersAndDependencies(
+        tx,
+        users.map((user) => user.id),
+      );
+
+      await tx.department.delete({ where: { id: departmentId } });
+    });
+
+    return NextResponse.json({ message: "המחלקה וכל המשתמשים שלה נמחקו" });
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || "שגיאה" },

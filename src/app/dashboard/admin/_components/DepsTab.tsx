@@ -1,21 +1,24 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { EmptyState } from "./SimpleModal";
 
 type Department = {
   id: number;
   name: string;
+  unitId: number;
   unit: { name: string; company: { name: string } };
 };
 
 export function DepsTab({
   departments,
   onDelete,
+  onEdit,
   onNew,
 }: {
   departments: Department[];
   onDelete: (id: number) => void;
+  onEdit: (department: Department) => void;
   onNew: () => void;
 }) {
   return (
@@ -42,15 +45,23 @@ export function DepsTab({
               <div>
                 <p className="text-white font-medium">{d.name}</p>
                 <p className="text-xs text-slate-500">
-                  {d.unit.name} / {d.unit.company.name}
+                  {d.unit.company.name} / {d.unit.name} / {d.name}
                 </p>
               </div>
-              <button
-                onClick={() => onDelete(d.id)}
-                className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onEdit(d)}
+                  className="p-1.5 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => onDelete(d.id)}
+                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))
         )}

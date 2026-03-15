@@ -18,9 +18,11 @@ type UserRow = {
   username: string;
   isActive: boolean;
   roles: string[];
+  departmentId?: number | null;
   department: string | null;
   unit: string | null;
   company: string | null;
+  path?: string | null;
   createdBy: string | null;
   college?: string | null;
   profileImage?: string | null;
@@ -54,6 +56,9 @@ export default function AdminPage() {
   const [showCreateUnit, setShowCreateUnit] = useState(false);
   const [showCreateDept, setShowCreateDept] = useState(false);
   const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [editCompany, setEditCompany] = useState<Company | null>(null);
+  const [editUnit, setEditUnit] = useState<Unit | null>(null);
+  const [editDept, setEditDept] = useState<Department | null>(null);
 
   useEffect(() => {
     setToken(localStorage.getItem("authToken"));
@@ -79,20 +84,27 @@ export default function AdminPage() {
   const fetchCompanies = useCallback(async () => {
     if (!token) return;
     const res = await fetch("/api/org/company", { headers: hdrs() });
-    setCompanies(await res.json());
+    const data = await res.json();
+    setCompanies(Array.isArray(data) ? data : []);
   }, [token, hdrs]);
 
   const fetchUnits = useCallback(async () => {
     if (!token) return;
     const res = await fetch("/api/org/unit", { headers: hdrs() });
-    setUnits(await res.json());
+    const data = await res.json();
+    setUnits(Array.isArray(data) ? data : []);
   }, [token, hdrs]);
 
   const fetchDepts = useCallback(async () => {
     if (!token) return;
     const res = await fetch("/api/org/department", { headers: hdrs() });
-    setDepartments(await res.json());
+    const data = await res.json();
+    setDepartments(Array.isArray(data) ? data : []);
   }, [token, hdrs]);
+
+  const refreshOrg = useCallback(async () => {
+    await Promise.all([fetchCompanies(), fetchUnits(), fetchDepts(), fetchUsers()]);
+  }, [fetchCompanies, fetchUnits, fetchDepts, fetchUsers]);
 
   useEffect(() => {
     if (!token) return;
@@ -119,39 +131,39 @@ export default function AdminPage() {
   };
 
   const deleteCompany = async (id: number) => {
-    if (!confirm("למחוק יחידה זו?")) return;
+    if (!confirm("מחיקת חברה תמחק גם את כל היחידות, המחלקות והמשתמשים ששייכים אליה. להמשיך?")) return;
     await fetch("/api/org/company", {
       method: "DELETE",
       headers: hdrs(),
       body: JSON.stringify({ id }),
     });
-    fetchCompanies();
+    refreshOrg();
   };
 
   const deleteUnit = async (id: number) => {
-    if (!confirm("למחוק גף זה?")) return;
+    if (!confirm("מחיקת יחידה תמחק גם את כל המחלקות והמשתמשים ששייכים אליה. להמשיך?")) return;
     await fetch("/api/org/unit", {
       method: "DELETE",
       headers: hdrs(),
       body: JSON.stringify({ id }),
     });
-    fetchUnits();
+    refreshOrg();
   };
 
   const deleteDept = async (id: number) => {
-    if (!confirm("למחוק מחלקה זו?")) return;
+    if (!confirm("מחיקת מחלקה תמחק גם את כל המשתמשים ששייכים אליה. להמשיך?")) return;
     await fetch("/api/org/department", {
       method: "DELETE",
       headers: hdrs(),
       body: JSON.stringify({ id }),
     });
-    fetchDepts();
+    refreshOrg();
   };
 
   const tabsList: { id: Tab; label: string; icon: any }[] = [
     { id: "users", label: "משתמשים", icon: Users },
-    { id: "companies", label: "יחידות", icon: Building2 },
-    { id: "units", label: "גפים", icon: Layers },
+    { id: "companies", label: "חברות", icon: Building2 },
+    { id: "units", label: "יחידות", icon: Layers },
     { id: "departments", label: "מחלקות", icon: Layers },
   ];
 
@@ -164,7 +176,7 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
           ניהול מערכת
         </h1>
-        <p className="text-slate-400">ניהול משתמשים, יחידות, גפים ומחלקות</p>
+        <p className="text-slate-400">ניהול חברות, יחידות, מחלקות ומשתמשים</p>
       </div>
 
       <div className="flex gap-2 mb-8 border-b border-white/5 pb-4">
@@ -198,6 +210,7 @@ export default function AdminPage() {
         <CompaniesTab
           companies={companies}
           onDelete={deleteCompany}
+          onEdit={setEditCompany}
           onNew={() => setShowCreateCompany(true)}
         />
       )}
@@ -206,6 +219,7 @@ export default function AdminPage() {
         <UnitsTab
           units={units}
           onDelete={deleteUnit}
+          onEdit={setEditUnit}
           onNew={() => setShowCreateUnit(true)}
         />
       )}
@@ -214,6 +228,7 @@ export default function AdminPage() {
         <DepsTab
           departments={departments}
           onDelete={deleteDept}
+          onEdit={setEditDept}
           onNew={() => setShowCreateDept(true)}
         />
       )}
@@ -245,8 +260,9 @@ export default function AdminPage() {
 
       {showCreateCompany && (
         <SimpleCreateModal
-          title="יחידה חדשה"
-          fields={[{ key: "name", label: "שם היחידה" }]}
+          title="חברה חדשה"
+          fields={[{ key: "name", label: "שם החברה" }]}
+          submitLabel="צור חברה"
           onClose={() => setShowCreateCompany(false)}
           onSubmit={async (data) => {
             await fetch("/api/org/company", {
@@ -260,18 +276,38 @@ export default function AdminPage() {
         />
       )}
 
+      {editCompany && (
+        <SimpleCreateModal
+          title="עריכת חברה"
+          fields={[{ key: "name", label: "שם החברה" }]}
+          initialValues={{ name: editCompany.name }}
+          submitLabel="שמור שינויים"
+          onClose={() => setEditCompany(null)}
+          onSubmit={async (data) => {
+            await fetch("/api/org/company", {
+              method: "PATCH",
+              headers: hdrs(),
+              body: JSON.stringify({ id: editCompany.id, ...data }),
+            });
+            setEditCompany(null);
+            refreshOrg();
+          }}
+        />
+      )}
+
       {showCreateUnit && (
         <SimpleCreateModal
-          title="גף חדש"
+          title="יחידה חדשה"
           fields={[
-            { key: "name", label: "שם הגף" },
+            { key: "name", label: "שם היחידה" },
             {
               key: "companyId",
-              label: "יחידה",
+              label: "חברה",
               type: "select",
               options: companies.map((c) => ({ value: c.id, label: c.name })),
             },
           ]}
+          submitLabel="צור יחידה"
           onClose={() => setShowCreateUnit(false)}
           onSubmit={async (data) => {
             await fetch("/api/org/unit", {
@@ -285,6 +321,33 @@ export default function AdminPage() {
         />
       )}
 
+      {editUnit && (
+        <SimpleCreateModal
+          title="עריכת יחידה"
+          fields={[
+            { key: "name", label: "שם היחידה" },
+            {
+              key: "companyId",
+              label: "חברה",
+              type: "select",
+              options: companies.map((c) => ({ value: c.id, label: c.name })),
+            },
+          ]}
+          initialValues={{ name: editUnit.name, companyId: editUnit.companyId }}
+          submitLabel="שמור שינויים"
+          onClose={() => setEditUnit(null)}
+          onSubmit={async (data) => {
+            await fetch("/api/org/unit", {
+              method: "PATCH",
+              headers: hdrs(),
+              body: JSON.stringify({ id: editUnit.id, ...data }),
+            });
+            setEditUnit(null);
+            refreshOrg();
+          }}
+        />
+      )}
+
       {showCreateDept && (
         <SimpleCreateModal
           title="מחלקה חדשה"
@@ -292,14 +355,15 @@ export default function AdminPage() {
             { key: "name", label: "שם המחלקה" },
             {
               key: "unitId",
-              label: "גף",
+              label: "יחידה",
               type: "select",
               options: units.map((u) => ({
                 value: u.id,
-                label: `${u.name} / ${u.company.name}`,
+                label: `${u.company.name} / ${u.name}`,
               })),
             },
           ]}
+          submitLabel="צור מחלקה"
           onClose={() => setShowCreateDept(false)}
           onSubmit={async (data) => {
             await fetch("/api/org/department", {
@@ -309,6 +373,36 @@ export default function AdminPage() {
             });
             setShowCreateDept(false);
             fetchDepts();
+          }}
+        />
+      )}
+
+      {editDept && (
+        <SimpleCreateModal
+          title="עריכת מחלקה"
+          fields={[
+            { key: "name", label: "שם המחלקה" },
+            {
+              key: "unitId",
+              label: "יחידה",
+              type: "select",
+              options: units.map((u) => ({
+                value: u.id,
+                label: `${u.company.name} / ${u.name}`,
+              })),
+            },
+          ]}
+          initialValues={{ name: editDept.name, unitId: editDept.unitId }}
+          submitLabel="שמור שינויים"
+          onClose={() => setEditDept(null)}
+          onSubmit={async (data) => {
+            await fetch("/api/org/department", {
+              method: "PATCH",
+              headers: hdrs(),
+              body: JSON.stringify({ id: editDept.id, ...data }),
+            });
+            setEditDept(null);
+            refreshOrg();
           }}
         />
       )}

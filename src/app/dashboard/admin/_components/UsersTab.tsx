@@ -11,9 +11,11 @@ type UserRow = {
   username: string;
   isActive: boolean;
   roles: string[];
+  departmentId?: number | null;
   department: string | null;
   unit: string | null;
   company: string | null;
+  path?: string | null;
   createdBy: string | null;
   college?: string | null;
   profileImage?: string | null;
@@ -63,9 +65,9 @@ export function UsersTab({
               <th className="px-4 py-3 font-medium">משתמש</th>
               <th className="px-4 py-3 font-medium">שם משתמש</th>
               <th className="px-4 py-3 font-medium">תפקיד</th>
-              <th className="px-4 py-3 font-medium">מחלקה</th>
+              <th className="px-4 py-3 font-medium">שיוך</th>
               <th className="px-4 py-3 font-medium">מוסד</th>
-              <th className="px-4 py-3 font-medium">נוצר ע"י</th>
+              <th className="px-4 py-3 font-medium">נוצר ע\"י</th>
               <th className="px-4 py-3 font-medium">סטטוס</th>
               <th className="px-4 py-3 font-medium">פעולות</th>
             </tr>
@@ -126,11 +128,8 @@ export function UsersTab({
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-300 text-xs">
-                    {u.department ? (
-                      <span>
-                        {u.department}
-                        <span className="text-slate-500"> / {u.unit}</span>
-                      </span>
+                    {u.path ? (
+                      <span>{u.path}</span>
                     ) : (
                       <span className="text-slate-600">—</span>
                     )}

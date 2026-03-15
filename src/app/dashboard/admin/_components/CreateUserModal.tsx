@@ -7,7 +7,7 @@ import { ProfileImageInput } from "@/components/ProfileImageInput";
 type Department = {
   id: number;
   name: string;
-  unit: { name: string };
+  unit: { name: string; company: { name: string } };
 };
 
 export function CreateUserModal({
@@ -164,7 +164,7 @@ export function CreateUserModal({
             <option value="">ללא מחלקה</option>
             {departments.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.name} / {d.unit.name}
+                {d.unit.company.name} / {d.unit.name} / {d.name}
               </option>
             ))}
           </select>

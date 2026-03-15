@@ -7,7 +7,7 @@ import { ProfileImageInput } from "@/components/ProfileImageInput";
 type Department = {
   id: number;
   name: string;
-  unit: { name: string };
+  unit: { name: string; company: { name: string } };
 };
 
 type UserRow = {
@@ -16,6 +16,7 @@ type UserRow = {
   lastName: string;
   email: string;
   isActive: boolean;
+  departmentId?: number | null;
   department: string | null;
   roles: string[];
   college?: string | null;
@@ -43,7 +44,7 @@ export function EditUserModal({
   const [college, setCollege] = useState(user.college ?? "");
   const [profileImage, setProfileImage] = useState(user.profileImage ?? "");
   const [departmentId, setDepartmentId] = useState(
-    departments.find((d) => d.name === user.department)?.id?.toString() ?? "",
+    user.departmentId ? String(user.departmentId) : "",
   );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -162,7 +163,7 @@ export function EditUserModal({
             <option value="">ללא מחלקה</option>
             {departments.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.name} / {d.unit.name}
+                {d.unit.company.name} / {d.unit.name} / {d.name}
               </option>
             ))}
           </select>

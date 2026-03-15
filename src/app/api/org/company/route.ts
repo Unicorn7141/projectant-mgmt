@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, hasRole } from "@/lib/auth-helpers";
+import { deleteUsersAndDependencies } from "@/lib/org-cascade";
 
 export async function GET(req: NextRequest) {
   try {
@@ -63,8 +65,46 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "אדמין בלבד" }, { status: 403 });
     }
     const { id } = await req.json();
-    await prisma.company.delete({ where: { id: Number(id) } });
-    return NextResponse.json({ message: "נמחק בהצלחה" });
+    const companyId = Number(id);
+
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const units = await tx.unit.findMany({
+        where: { companyId },
+        select: { id: true },
+      });
+      const unitIds = units.map((unit) => unit.id);
+
+      const departments = await tx.department.findMany({
+        where: { unitId: { in: unitIds } },
+        select: { id: true },
+      });
+      const departmentIds = departments.map((department) => department.id);
+
+      const users = await tx.user.findMany({
+        where: { departmentId: { in: departmentIds } },
+        select: { id: true },
+      });
+      await deleteUsersAndDependencies(
+        tx,
+        users.map((user) => user.id),
+      );
+
+      if (departmentIds.length > 0) {
+        await tx.department.deleteMany({
+          where: { id: { in: departmentIds } },
+        });
+      }
+
+      if (unitIds.length > 0) {
+        await tx.unit.deleteMany({
+          where: { id: { in: unitIds } },
+        });
+      }
+
+      await tx.company.delete({ where: { id: companyId } });
+    });
+
+    return NextResponse.json({ message: "החברה וכל מה ששייך אליה נמחקו" });
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || "שגיאה" },

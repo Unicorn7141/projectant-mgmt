@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "1123698";
@@ -31,7 +32,39 @@ export async function requireAuth(
 
   return {
     id: user.id,
-    roles: user.roles.map((ur) => ur.role.name),
+    roles: user.roles.map((ur: { role: { name: string } }) => ur.role.name),
+    departmentId: user.departmentId,
+  };
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const cookieStore = await cookies();
+
+  const token =
+    cookieStore.get("token")?.value ||
+    cookieStore.get("authToken")?.value ||
+    cookieStore.get("jwt")?.value ||
+    null;
+
+  if (!token) return null;
+
+  let payload: any;
+  try {
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    include: { roles: { include: { role: true } } },
+  });
+
+  if (!user || !user.isActive) return null;
+
+  return {
+    id: user.id,
+    roles: user.roles.map((ur: { role: { name: string } }) => ur.role.name),
     departmentId: user.departmentId,
   };
 }
@@ -40,7 +73,6 @@ export function hasRole(user: AuthUser, ...roles: string[]) {
   return roles.some((r) => user.roles.includes(r));
 }
 
-// מחזיר את כל ה-IDs של משתמשים שנוצרו "מתחת" ל-user הנוכחי (רקורסיבי)
 export async function getVisibleUserIds(userId: number): Promise<number[]> {
   const ids: number[] = [userId];
   const queue = [userId];
